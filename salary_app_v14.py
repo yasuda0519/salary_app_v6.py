@@ -194,27 +194,31 @@ if user_id in credentials and credentials[user_id] == user_pass:
             days_of_week = ["月", "火", "水", "木", "金", "土", "日"]
 
             calendar_html = """
-            <style>
-                table.calendar {
-                    border-collapse: collapse;
-                    width: 100%;
-                    max-width: 500px;
-                    margin: 0 auto;
-                    table-layout: fixed;
-                }
-                table.calendar th, table.calendar td {
-                    border: 1px solid #ddd;
-                    padding: 8px;
-                    text-align: center;
-                    width: 14.2857%;
-                }
-                table.calendar th {
-                    background-color: #f2f2f2;
-                }
-            </style>
-            <table class="calendar">
-              <tr>
-            """
+<style>
+    table.calendar {
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        table-layout: fixed; /* 各セルを均等幅に */
+        background-color: #ffffff; /* テーブル全体の背景色を白に */
+    }
+    table.calendar th, table.calendar td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+        width: 14.2857%;
+        color: #000000; /* 文字色を黒に */
+    }
+    table.calendar th {
+        background-color: #f2f2f2; /* 見出しセルの背景色を薄いグレーに */
+    }
+</style>
+<table class="calendar">
+  <tr>
+"""
+
+# 以下、曜日の見出しと日付セルの追加処理
             for day in days_of_week:
                 calendar_html += f"<th>{day}</th>"
             calendar_html += "</tr>"
