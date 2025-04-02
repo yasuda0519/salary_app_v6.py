@@ -10,16 +10,24 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # ---------- カスタムCSS ----------
-
-# 背景色を白に変更するCSSを追加
+# 背景を白、文字を黒に設定
 st.markdown(
     """
     <style>
-    .reportview-container, .main, .block-container {
-        background-color: white;
+    /* 全体の背景と文字色を指定 */
+    html, body, [class*="css"]  {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
     }
+    /* Streamlitのブロック全体 */
+    .reportview-container, .main, .block-container, .stApp {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+    }
+    /* サイドバー */
     .sidebar .sidebar-content {
-        background-color: white;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
     }
     </style>
     """,
@@ -228,6 +236,7 @@ def main():
         st.write(f"📈 ドル円レート：{rate:.1f} 円")
         st.write(f"💰 税引前報酬：¥{before_tax:,} 円")
         st.write(f"🧾 源泉徴収額：-¥{tax:,} 円")
+
         # 税引後お給料を大きく表示（色やサイズはお好みで調整）
         st.markdown(
             f"<h2 style='font-size:2.5em; color:#d81b60;'>🎉 税引後お給料：¥{after_tax:,} 円</h2>",
