@@ -9,6 +9,23 @@ from calendar import monthrange
 import gspread
 from google.oauth2.service_account import Credentials
 
+# ---------- カスタムCSS ----------
+
+# 背景色を白に変更するCSSを追加
+st.markdown(
+    """
+    <style>
+    .reportview-container, .main, .block-container {
+        background-color: white;
+    }
+    .sidebar .sidebar-content {
+        background-color: white;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # ---------- 各種設定・関数 ----------
 
 def load_credentials():
@@ -211,7 +228,11 @@ def main():
         st.write(f"📈 ドル円レート：{rate:.1f} 円")
         st.write(f"💰 税引前報酬：¥{before_tax:,} 円")
         st.write(f"🧾 源泉徴収額：-¥{tax:,} 円")
-        st.success(f"🎉 税引後お給料：¥{after_tax:,} 円")
+        # 税引後お給料を大きく表示（色やサイズはお好みで調整）
+        st.markdown(
+            f"<h2 style='font-size:2.5em; color:#d81b60;'>🎉 税引後お給料：¥{after_tax:,} 円</h2>",
+            unsafe_allow_html=True
+        )
         st.info("💬 本日も大変お疲れ様でした。")
 
         # ▼▼▼ 色合いを上品なピンク系に変更 ▼▼▼
