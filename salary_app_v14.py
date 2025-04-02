@@ -202,6 +202,22 @@ def display_calendar(df):
     calendar_html += "</table>"
     st.markdown(calendar_html, unsafe_allow_html=True)
 
+# ----- 追加：シミュレーター関数 -----
+def display_simulator(df, user_id):
+    st.subheader("🧠 あと何回出ればどれくらい？シミュレーター")
+    
+    current_month = datetime.now().strftime("%Y-%m")
+    this_month_df = df[df["日付"].dt.strftime("%Y-%m") == current_month]
+    current_total = this_month_df["税引後お給料"].sum()
+    avg_salary = df["税引後お給料"].mean()
+
+    future_sessions = st.number_input("例えば今月あと何回配信すると？", min_value=0, max_value=30, value=3)
+    projected_total = current_total + avg_salary * future_sessions
+
+    last_day = datetime.now().replace(day=monthrange(datetime.now().year, datetime.now().month)[1]).strftime("%m月%d日")
+    st.markdown(f"📅 {last_day} 時点で、{user_id} さんの予測お給料は **¥{int(projected_total):,} 円** になりそうです！")
+    st.markdown(f"💡 今：¥{int(current_total):,} 円 ＋ 予測：¥{int(avg_salary * future_sessions):,} 円（平均 ¥{int(avg_salary):,}/回 × {future_sessions} 回）")
+
 # ---------- メイン処理 ----------
 
 def main():
@@ -263,7 +279,15 @@ def main():
                 display_charts(df)
                 display_monthly_bar_chart(df)
                 display_calendar(df)
-
+                display_simulator(df, user_id)
+        else:
+            df = load_records(sheet, user_id)
+            if not df.empty:
+                display_history(df)
+                display_charts(df)
+                display_monthly_bar_chart(df)
+                display_calendar(df)
+                display_simulator(df, user_id)
     else:
         if user_id and user_pass:
             st.error("❌ IDまたはパスワードが正しくありません。")
