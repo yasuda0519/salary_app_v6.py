@@ -202,7 +202,6 @@ def display_calendar(df):
     calendar_html += "</table>"
     st.markdown(calendar_html, unsafe_allow_html=True)
 
-# ----- 追加：シミュレーター関数 -----
 def display_simulator(df, user_id):
     st.subheader("🧠 あと何回出ればどれくらい？シミュレーター")
     
@@ -230,6 +229,7 @@ def main():
     user_id = st.text_input("ID（源氏名）を入力してください")
     user_pass = st.text_input("Password（パスワード）を入力してください", type="password")
 
+    # ログインチェック
     if user_id in credentials_dict and credentials_dict[user_id] == user_pass:
         st.success("✅ ログイン成功しました！")
 
@@ -242,20 +242,24 @@ def main():
             st.error("適切な為替レートが取得できなかったため、計算を終了します。")
             return
 
+        # 収益入力
         usd_input = st.text_input("💵 今日のドル収益 ($)", placeholder="例：200")
         try:
             usd = float(usd_input)
         except Exception:
             usd = 0.0
 
+        # 報酬計算
         before_tax, tax, after_tax = calculate_rewards(usd, rate)
 
+        # 結果表示
         st.write(f"📈 ドル円レート：{rate:.1f} 円")
         st.write(f"💰 税引前報酬：¥{before_tax:,} 円")
         st.write(f"🧾 源泉徴収額：-¥{tax:,} 円")
         st.success(f"🎉 税引後お給料：¥{after_tax:,} 円")
         st.info("💬 本日も大変お疲れ様でした。")
 
+        # 注意メッセージ
         st.markdown(
             """
             <div style='background-color:#4a148c; color:#FFFFFF; padding:12px; border-left: 6px solid #f48fb1; border-radius:5px;'>
@@ -269,7 +273,9 @@ def main():
             unsafe_allow_html=True
         )
 
+        # 「保存する」ボタン
         if st.button("💾 保存する（※忘れずに！）"):
+            # 保存 → 履歴などを表示
             save_to_sheet(sheet, user_id, usd, rate, before_tax, tax, after_tax)
             df = load_records(sheet, user_id)
             if df.empty:
@@ -281,14 +287,11 @@ def main():
                 display_calendar(df)
                 display_simulator(df, user_id)
         else:
-            df = load_records(sheet, user_id)
-            if not df.empty:
-                display_history(df)
-                display_charts(df)
-                display_monthly_bar_chart(df)
-                display_calendar(df)
-                display_simulator(df, user_id)
+            # ボタン未押下時は、履歴やグラフ等を表示しない
+            st.info("「保存する」ボタンを押すと、過去の報酬履歴・グラフ・カレンダーが表示されます。")
+
     else:
+        # ログイン失敗
         if user_id and user_pass:
             st.error("❌ IDまたはパスワードが正しくありません。")
 
