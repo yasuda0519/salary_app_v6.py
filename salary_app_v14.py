@@ -10,7 +10,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # ---------- カスタムCSS ----------
-# 背景を黒、文字色を白に設定
+# 背景を黒、文字色を白に設定（テーブル内も含む）
 st.markdown(
     """
     <style>
@@ -235,11 +235,9 @@ def main():
         st.write(f"📈 ドル円レート：{rate:.1f} 円")
         st.write(f"💰 税引前報酬：¥{before_tax:,} 円")
         st.write(f"🧾 源泉徴収額：-¥{tax:,} 円")
-        # 税引後お給料は通常サイズで表示
         st.success(f"🎉 税引後お給料：¥{after_tax:,} 円")
         st.info("💬 本日も大変お疲れ様でした。")
 
-        # ▼▼▼ 上品なピンク系の注意枠（背景黒でも見やすく） ▼▼▼
         st.markdown(
             """
             <div style='background-color:#4a148c; color:#FFFFFF; padding:12px; border-left: 6px solid #f48fb1; border-radius:5px;'>
@@ -252,7 +250,6 @@ def main():
             "<span style='color:#f8bbd0; font-weight:bold;'>⚠️ 必ず『保存する』ボタンを押してください！</span>",
             unsafe_allow_html=True
         )
-        # ▲▲▲ 注意枠ここまで ▲▲▲
 
         if st.button("💾 保存する（※忘れずに！）"):
             save_to_sheet(sheet, user_id, usd, rate, before_tax, tax, after_tax)
@@ -264,13 +261,11 @@ def main():
                 display_charts(df)
                 display_calendar(df)
         else:
-            # 保存ボタンを押していなくても、過去の履歴を表示
             df = load_records(sheet, user_id)
             if not df.empty:
                 display_history(df)
                 display_charts(df)
                 display_calendar(df)
-
     else:
         if user_id and user_pass:
             st.error("❌ IDまたはパスワードが正しくありません。")
