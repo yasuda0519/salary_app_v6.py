@@ -214,7 +214,6 @@ def display_simulator(df, user_id):
     current_total = this_month_df["税引後お給料"].sum()
     avg_salary = df["税引後お給料"].mean()
 
-    # シミュレーターは数値入力のみで動的に再計算（画面全体は再初期化されない）
     future_sessions = st.number_input("例えば今月あと何回配信すると？", min_value=0, max_value=30, value=3, key="simulator_sessions")
     projected_total = current_total + avg_salary * future_sessions
 
@@ -224,11 +223,12 @@ def display_simulator(df, user_id):
 
 # ---------- メイン処理 ----------
 def main():
+    # タイトル変更：短くしました
+    st.title("ライバー専用｜報酬計算ツール (Ver.10.7.3)")
+    st.subheader("👤 ログイン")
+
     credentials_dict = load_credentials()
     goals = load_goals()
-
-    st.title("🔐 ライバー専用｜報酬計算ツール (Ver.10.7.3-GS-Full-Mobile++ グラフ&月別棒グラフ版)")
-    st.subheader("👤 ログイン")
 
     user_id = st.text_input("ID（源氏名）を入力してください")
     user_pass = st.text_input("Password（パスワード）を入力してください", type="password")
@@ -275,7 +275,6 @@ def main():
             save_to_sheet(sheet, user_id, usd, rate, before_tax, tax, after_tax)
             st.session_state.saved = True
 
-        # 保存ボタンが押された場合のみ、過去の履歴・グラフ・シミュレーターを表示
         if st.session_state.saved:
             df = load_records(sheet, user_id)
             if df.empty:
