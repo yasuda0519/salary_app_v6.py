@@ -260,12 +260,7 @@ def main():
                 display_history(df)
                 display_charts(df)
                 display_calendar(df)
-        else:
-            df = load_records(sheet, user_id)
-            if not df.empty:
-                display_history(df)
-                display_charts(df)
-                display_calendar(df)
+        
     else:
         if user_id and user_pass:
             st.error("❌ IDまたはパスワードが正しくありません。")
