@@ -10,24 +10,23 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # ---------- カスタムCSS ----------
-# 背景を白、文字を黒に設定
+# 背景を黒、文字色を白に設定
 st.markdown(
     """
     <style>
-    /* 全体の背景と文字色を指定 */
-    html, body, [class*="css"]  {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-    }
-    /* Streamlitのブロック全体 */
+    /* 全体の背景と文字色 */
     .reportview-container, .main, .block-container, .stApp {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
+        background-color: #000000 !important;
+        color: #FFFFFF !important;
     }
     /* サイドバー */
     .sidebar .sidebar-content {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
+        background-color: #000000 !important;
+        color: #FFFFFF !important;
+    }
+    /* テーブル内の文字色 */
+    table, th, td {
+        color: #FFFFFF !important;
     }
     </style>
     """,
@@ -166,17 +165,17 @@ def display_calendar(df):
             max-width: 500px;
             margin: 0 auto;
             table-layout: fixed;
-            background-color: #ffffff;
+            background-color: #000000;
         }
         table.calendar th, table.calendar td {
-            border: 1px solid #ddd;
+            border: 1px solid #444444;
             padding: 8px;
             text-align: center;
             width: 14.2857%;
-            color: #000000;
+            color: #FFFFFF;
         }
         table.calendar th {
-            background-color: #f2f2f2;
+            background-color: #222222;
         }
     </style>
     <table class="calendar">
@@ -236,28 +235,24 @@ def main():
         st.write(f"📈 ドル円レート：{rate:.1f} 円")
         st.write(f"💰 税引前報酬：¥{before_tax:,} 円")
         st.write(f"🧾 源泉徴収額：-¥{tax:,} 円")
-
-        # 税引後お給料を大きく表示（色やサイズはお好みで調整）
-        st.markdown(
-            f"<h2 style='font-size:2.5em; color:#d81b60;'>🎉 税引後お給料：¥{after_tax:,} 円</h2>",
-            unsafe_allow_html=True
-        )
+        # 税引後お給料は通常サイズで表示
+        st.success(f"🎉 税引後お給料：¥{after_tax:,} 円")
         st.info("💬 本日も大変お疲れ様でした。")
 
-        # ▼▼▼ 色合いを上品なピンク系に変更 ▼▼▼
+        # ▼▼▼ 上品なピンク系の注意枠（背景黒でも見やすく） ▼▼▼
         st.markdown(
             """
-            <div style='background-color:#fce4ec; color:#333333; padding:12px; border-left: 6px solid #f48fb1; border-radius:5px;'>
+            <div style='background-color:#4a148c; color:#FFFFFF; padding:12px; border-left: 6px solid #f48fb1; border-radius:5px;'>
             ⬇️ <strong>このボタンを押さないと、今日のお給料が保存されません！</strong>
             </div>
             """,
             unsafe_allow_html=True
         )
         st.markdown(
-            "<span style='color:#e91e63; font-weight:bold;'>⚠️ 必ず『保存する』ボタンを押してください！</span>",
+            "<span style='color:#f8bbd0; font-weight:bold;'>⚠️ 必ず『保存する』ボタンを押してください！</span>",
             unsafe_allow_html=True
         )
-        # ▲▲▲ 色合いを上品なピンク系に変更 ▲▲▲
+        # ▲▲▲ 注意枠ここまで ▲▲▲
 
         if st.button("💾 保存する（※忘れずに！）"):
             save_to_sheet(sheet, user_id, usd, rate, before_tax, tax, after_tax)
@@ -269,7 +264,7 @@ def main():
                 display_charts(df)
                 display_calendar(df)
         else:
-            # 保存ボタンを押していなくても、過去の履歴をすぐに表示
+            # 保存ボタンを押していなくても、過去の履歴を表示
             df = load_records(sheet, user_id)
             if not df.empty:
                 display_history(df)
