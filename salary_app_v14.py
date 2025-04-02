@@ -44,7 +44,7 @@ def calculate_rewards(usd, rate, reward_rate=0.6, tax_rate=0.1021):
 
 def connect_to_sheet():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_file("credentials.json", scopes=scope)
+    creds = Credentials.from_service_account_info(st.secrets["google_service_account"], scopes=scope)
     client = gspread.authorize(creds)
     sheet = client.open("報酬管理シート（2025）").sheet1
     return sheet
