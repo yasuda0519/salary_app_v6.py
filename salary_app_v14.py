@@ -214,18 +214,20 @@ def main():
         st.success(f"🎉 税引後お給料：¥{after_tax:,} 円")
         st.info("💬 本日も大変お疲れ様でした。")
 
+        # ▼▼▼ 色合いを上品なピンク系に変更 ▼▼▼
         st.markdown(
             """
-            <div style='background-color:#fff3cd; color:#333333; padding:12px; border-left: 6px solid #ffdd57; border-radius:5px;'>
+            <div style='background-color:#fce4ec; color:#333333; padding:12px; border-left: 6px solid #f48fb1; border-radius:5px;'>
             ⬇️ <strong>このボタンを押さないと、今日のお給料が保存されません！</strong>
             </div>
             """,
             unsafe_allow_html=True
         )
         st.markdown(
-            "<span style='color:#ff9900; font-weight:bold;'>⚠️ 必ず『保存する』ボタンを押してください！</span>",
+            "<span style='color:#e91e63; font-weight:bold;'>⚠️ 必ず『保存する』ボタンを押してください！</span>",
             unsafe_allow_html=True
         )
+        # ▲▲▲ 色合いを上品なピンク系に変更 ▲▲▲
 
         if st.button("💾 保存する（※忘れずに！）"):
             save_to_sheet(sheet, user_id, usd, rate, before_tax, tax, after_tax)
@@ -236,6 +238,14 @@ def main():
                 display_history(df)
                 display_charts(df)
                 display_calendar(df)
+        else:
+            # 保存ボタンを押していなくても、過去の履歴をすぐに表示
+            df = load_records(sheet, user_id)
+            if not df.empty:
+                display_history(df)
+                display_charts(df)
+                display_calendar(df)
+
     else:
         if user_id and user_pass:
             st.error("❌ IDまたはパスワードが正しくありません。")
