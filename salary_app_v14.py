@@ -10,21 +10,17 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # ---------- カスタムCSS ----------
-# 背景を黒、文字色を白に設定（テーブル内も含む）
 st.markdown(
     """
     <style>
-    /* 全体の背景と文字色 */
     .reportview-container, .main, .block-container, .stApp {
         background-color: #000000 !important;
         color: #FFFFFF !important;
     }
-    /* サイドバー */
     .sidebar .sidebar-content {
         background-color: #000000 !important;
         color: #FFFFFF !important;
     }
-    /* テーブル内の文字色 */
     table, th, td {
         color: #FFFFFF !important;
     }
@@ -38,7 +34,7 @@ st.markdown(
 def load_credentials():
     try:
         credentials = st.secrets["credentials"]
-    except Exception as e:
+    except Exception:
         st.error("ログイン情報の読み込みに失敗しました。")
         credentials = {}
     return credentials
@@ -46,7 +42,7 @@ def load_credentials():
 def load_goals():
     try:
         goals = st.secrets["goals"]
-    except Exception as e:
+    except Exception:
         st.error("目標金額の読み込みに失敗しました。")
         goals = {}
     return goals
@@ -56,7 +52,7 @@ def get_exchange_rate(url="https://open.er-api.com/v6/latest/USD"):
         response = requests.get(url)
         data = response.json()
         return data["rates"]["JPY"]
-    except Exception as e:
+    except Exception:
         st.error("為替レートの取得に失敗しました。")
         return 0
 
@@ -73,7 +69,7 @@ def connect_to_sheet():
         client = gspread.authorize(creds)
         sheet = client.open("報酬管理シート（2025）").sheet1
         return sheet
-    except Exception as e:
+    except Exception:
         st.error("Google スプレッドシートへの接続に失敗しました。")
         return None
 
@@ -83,14 +79,14 @@ def save_to_sheet(sheet, user_id, usd, rate, before_tax, tax, after_tax):
     try:
         sheet.append_row(new_row)
         st.success("✅ スプレッドシートに保存されました！")
-    except Exception as e:
+    except Exception:
         st.error("データの保存に失敗しました。")
 
 def load_records(sheet, user_id):
     try:
         records = sheet.get_all_records()
         df = pd.DataFrame(records)
-    except Exception as e:
+    except Exception:
         st.error("シートからのデータ取得に失敗しました。")
         return pd.DataFrame()
 
@@ -100,23 +96,18 @@ def load_records(sheet, user_id):
         st.error("日付データが存在しません。")
         return pd.DataFrame()
 
-    # 源氏名でフィルタリングし、最新の日付順にソート
     df = df[df["源氏名"] == user_id].sort_values("日付", ascending=False)
-    # 不要な列「源氏名」を削除
     df = df.drop(columns=["源氏名"]).reset_index(drop=True)
     return df
 
 def display_history(df):
     st.subheader("📚 過去の報酬履歴")
-    # 直近10回分のみ表示
     styled_df = df.copy().head(10)
-    # 各数値項目のフォーマット
     for col in ["ドル収益", "税引前報酬", "源泉徴収額", "税引後お給料"]:
         if col in styled_df.columns:
             styled_df[col] = styled_df[col].apply(lambda x: f"{x:,.0f}")
     if "レート" in styled_df.columns:
         styled_df["レート"] = styled_df["レート"].apply(lambda x: f"{x:.1f}")
-    # インデックスを1から始まるように再設定
     styled_df.index = range(1, len(styled_df) + 1)
     st.table(styled_df)
 
@@ -129,7 +120,6 @@ def display_history(df):
 
 def display_charts(df):
     st.subheader("📈 近30日の報酬の推移")
-    # 日付でソートして最新30件（件数が足りなければ全件）を取得
     recent_df = df.sort_values("日付").head(30).sort_values("日付")
     if recent_df.empty:
         st.info("表示するデータがありません。")
@@ -146,13 +136,25 @@ def display_charts(df):
     )
     st.altair_chart(chart + avg_line, use_container_width=True)
 
+def display_monthly_bar_chart(df):
+    st.subheader("📊 月別の合計報酬（直近3ヶ月）")
+    df["月"] = df["日付"].dt.to_period("M").astype(str)
+    monthly_df = df.groupby("月")["税引後お給料"].sum().reset_index()
+    monthly_df = monthly_df.sort_values("月", ascending=False).head(3).sort_values("月")
+
+    bar = alt.Chart(monthly_df).mark_bar(color="#90caf9").encode(
+        x=alt.X("月:N", sort=None),
+        y=alt.Y("税引後お給料:Q"),
+        tooltip=["月", "税引後お給料"]
+    ).properties(width=400, height=250)
+    st.altair_chart(bar, use_container_width=True)
+
 def display_calendar(df):
     st.subheader("📆 今月の活動カレンダー")
     today = datetime.now()
     year = today.year
     month = today.month
     start_weekday, last_day = monthrange(year, month)
-    # シートから取得した日付を文字列に変換
     saved_dates = df["日付"].dt.strftime("%Y-%m-%d").tolist() if not df.empty else []
     saved_set = set(saved_dates)
     days_of_week = ["月", "火", "水", "木", "金", "土", "日"]
@@ -206,7 +208,7 @@ def main():
     credentials_dict = load_credentials()
     goals = load_goals()
 
-    st.title("🔐 ライバー専用｜報酬計算ツール (Ver.10.7.3-GS-Full-Mobile++ グラフ版)")
+    st.title("🔐 ライバー専用｜報酬計算ツール (Ver.10.7.3-GS-Full-Mobile++ グラフ&月別棒グラフ版)")
     st.subheader("👤 ログイン")
 
     user_id = st.text_input("ID（源氏名）を入力してください")
@@ -227,7 +229,7 @@ def main():
         usd_input = st.text_input("💵 今日のドル収益 ($)", placeholder="例：200")
         try:
             usd = float(usd_input)
-        except Exception as e:
+        except Exception:
             usd = 0.0
 
         before_tax, tax, after_tax = calculate_rewards(usd, rate)
@@ -259,8 +261,9 @@ def main():
             else:
                 display_history(df)
                 display_charts(df)
+                display_monthly_bar_chart(df)
                 display_calendar(df)
-        
+
     else:
         if user_id and user_pass:
             st.error("❌ IDまたはパスワードが正しくありません。")
