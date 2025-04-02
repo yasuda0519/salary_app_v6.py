@@ -120,6 +120,14 @@ def display_history(df):
     st.markdown(f"🧮 **直近10回の平均お給料：¥{math.ceil(recent_avg):,} 円**")
     max_salary = df["税引後お給料"].max()
     st.markdown(f"👑 **過去最高お給料：¥{math.ceil(max_salary):,} 円**")
+    
+    # --- 今月の合計お給料と配信回数を追加 ---
+    current_month = datetime.now().strftime("%Y-%m")
+    this_month_df = df[df["日付"].dt.strftime("%Y-%m") == current_month]
+    monthly_total = this_month_df["税引後お給料"].sum()
+    monthly_count = this_month_df.shape[0]
+    st.markdown(f"📅 **今月の合計お給料：¥{monthly_total:,} 円**")
+    st.markdown(f"📌 **今月の配信回数：{monthly_count} 回**")
 
 def display_charts(df):
     st.subheader("📈 近30日の報酬の推移")
