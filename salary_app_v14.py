@@ -83,24 +83,25 @@ def load_records(sheet, user_id):
     return df
 
 def display_history(df):
-    with st.expander("📚 過去の報酬履歴を表示する"):
-        styled_df = df.copy().head(10)
-        # 各数値項目のフォーマット
-        for col in ["ドル収益", "税引前報酬", "源泉徴収額", "税引後お給料"]:
-            if col in styled_df.columns:
-                styled_df[col] = styled_df[col].apply(lambda x: f"{x:,.0f}")
-        if "レート" in styled_df.columns:
-            styled_df["レート"] = styled_df["レート"].apply(lambda x: f"{x:.1f}")
-        # インデックスの振り直し（1から始まる）
-        styled_df.index = range(1, len(styled_df) + 1)
-        st.table(styled_df)
+    st.subheader("📚 過去の報酬履歴")
+    # 直近10回分のみ表示
+    styled_df = df.copy().head(10)
+    # 各数値項目のフォーマット
+    for col in ["ドル収益", "税引前報酬", "源泉徴収額", "税引後お給料"]:
+        if col in styled_df.columns:
+            styled_df[col] = styled_df[col].apply(lambda x: f"{x:,.0f}")
+    if "レート" in styled_df.columns:
+        styled_df["レート"] = styled_df["レート"].apply(lambda x: f"{x:.1f}")
+    # インデックスを1から始まるように再設定
+    styled_df.index = range(1, len(styled_df) + 1)
+    st.table(styled_df)
 
-        recent_vals = df.head(10)["税引後お給料"]
-        recent_vals = recent_vals[recent_vals > 0]
-        recent_avg = recent_vals.mean() if not recent_vals.empty else 0
-        st.markdown(f"🧮 **直近10回の平均お給料：¥{math.ceil(recent_avg):,} 円**")
-        max_salary = df["税引後お給料"].max()
-        st.markdown(f"👑 **過去最高お給料：¥{math.ceil(max_salary):,} 円**")
+    recent_vals = df.head(10)["税引後お給料"]
+    recent_vals = recent_vals[recent_vals > 0]
+    recent_avg = recent_vals.mean() if not recent_vals.empty else 0
+    st.markdown(f"🧮 **直近10回の平均お給料：¥{math.ceil(recent_avg):,} 円**")
+    max_salary = df["税引後お給料"].max()
+    st.markdown(f"👑 **過去最高お給料：¥{math.ceil(max_salary):,} 円**")
 
 def display_charts(df):
     st.subheader("📈 近30日の報酬の推移")
@@ -120,6 +121,60 @@ def display_charts(df):
         y="平均:Q"
     )
     st.altair_chart(chart + avg_line, use_container_width=True)
+
+def display_calendar(df):
+    st.subheader("📆 今月の活動カレンダー")
+    today = datetime.now()
+    year = today.year
+    month = today.month
+    start_weekday, last_day = monthrange(year, month)
+    # シートから取得した日付を文字列に変換
+    saved_dates = df["日付"].dt.strftime("%Y-%m-%d").tolist() if not df.empty else []
+    saved_set = set(saved_dates)
+    days_of_week = ["月", "火", "水", "木", "金", "土", "日"]
+
+    calendar_html = """
+    <style>
+        table.calendar {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            table-layout: fixed;
+            background-color: #ffffff;
+        }
+        table.calendar th, table.calendar td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            width: 14.2857%;
+            color: #000000;
+        }
+        table.calendar th {
+            background-color: #f2f2f2;
+        }
+    </style>
+    <table class="calendar">
+      <tr>
+    """
+    for day in days_of_week:
+        calendar_html += f"<th>{day}</th>"
+    calendar_html += "</tr>"
+
+    week = [""] * start_weekday
+    for d in range(1, last_day + 1):
+        day_str = datetime(year, month, d).strftime("%Y-%m-%d")
+        mark = "🎙" if day_str in saved_set else ""
+        week.append(f"{d}{mark}")
+        if len(week) == 7:
+            calendar_html += "<tr>" + "".join([f"<td>{cell}</td>" if cell != "" else "<td>&nbsp;</td>" for cell in week]) + "</tr>"
+            week = []
+    if week:
+        while len(week) < 7:
+            week.append("")
+        calendar_html += "<tr>" + "".join([f"<td>{cell}</td>" if cell != "" else "<td>&nbsp;</td>" for cell in week]) + "</tr>"
+    calendar_html += "</table>"
+    st.markdown(calendar_html, unsafe_allow_html=True)
 
 # ---------- メイン処理 ----------
 
@@ -180,6 +235,7 @@ def main():
             else:
                 display_history(df)
                 display_charts(df)
+                display_calendar(df)
     else:
         if user_id and user_pass:
             st.error("❌ IDまたはパスワードが正しくありません。")
