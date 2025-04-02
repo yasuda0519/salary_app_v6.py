@@ -34,7 +34,6 @@ if 'saved' not in st.session_state:
     st.session_state.saved = False
 
 # ---------- 各種設定・関数 ----------
-
 def load_credentials():
     try:
         credentials = st.secrets["credentials"]
@@ -223,8 +222,7 @@ def display_simulator(df, user_id):
 
 # ---------- メイン処理 ----------
 def main():
-    # タイトル変更：短くしました
-    st.title("ライバー専用｜報酬計算ツール (Ver.10.7.3)")
+    st.title("🔐 ライバー専用｜報酬計算ツール (Ver.10.7.3)")
     st.subheader("👤 ログイン")
 
     credentials_dict = load_credentials()
