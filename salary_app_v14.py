@@ -188,7 +188,7 @@ def display_calendar(df):
     week = [""] * start_weekday
     for d in range(1, last_day + 1):
         day_str = datetime(year, month, d).strftime("%Y-%m-%d")
-        mark = "🎙" if day_str in saved_set else ""
+        mark = "🌟" if day_str in saved_set else ""
         week.append(f"{d}{mark}")
         if len(week) == 7:
             calendar_html += "<tr>" + "".join([f"<td>{cell}</td>" if cell != "" else "<td>&nbsp;</td>" for cell in week]) + "</tr>"
