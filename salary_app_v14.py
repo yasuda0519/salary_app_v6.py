@@ -13,20 +13,23 @@ from google.oauth2.service_account import Credentials
 st.markdown(
     """
     <style>
-    /* 全体の背景・文字色の設定 */
+    /* 全体の背景・文字色 */
     .reportview-container, .main, .block-container, .stApp {
         background-color: #000000 !important;
         color: #FFFFFF !important;
         padding: 20px;
+        /* 下部に余白を加えてロゴや文字が被らないようにする */
+        margin-bottom: 100px !important;
     }
     .sidebar .sidebar-content {
         background-color: #000000 !important;
         color: #FFFFFF !important;
     }
+    /* テーブル文字色 */
     table, th, td {
         color: #FFFFFF !important;
     }
-    /* ボタンのスタイルを上書き（PC向け） */
+    /* ボタンのスタイル（PC向け） */
     .stButton > button {
         color: #000000 !important;         /* 文字色：黒 */
         background-color: #f8bbd0 !important; /* 背景色：淡いピンク */
@@ -34,10 +37,15 @@ st.markdown(
         border: 1px solid #ffffff;
         font-weight: bold;
     }
+    /* Number Inputのラベル文字色を白にする */
+    .stNumberInput label {
+        color: #FFFFFF !important;
+    }
     /* スマホ用レスポンシブ調整 */
     @media only screen and (max-width: 600px) {
         .reportview-container, .main, .block-container, .stApp {
             padding: 10px !important;
+            margin-bottom: 120px !important; /* スマホ時はさらに余白を増やす */
         }
         h1 {
             font-size: 1.8em !important;
@@ -96,7 +104,6 @@ def connect_to_sheet():
         return None
 
 def save_to_sheet(sheet, user_id, usd, rate, before_tax, tax, after_tax):
-    # JST（日本時間）のタイムゾーン
     JST = timezone(timedelta(hours=9))
     raw_date = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S")  # 保存用
     display_date = datetime.now(JST).strftime("%m月%d日 %H:%M")   # 表示用
@@ -114,11 +121,13 @@ def load_records(sheet, user_id):
     except Exception:
         st.error("シートからのデータ取得に失敗しました。")
         return pd.DataFrame()
+
     if "日付" in df.columns:
         df["日付"] = pd.to_datetime(df["日付"], errors="coerce")
     else:
         st.error("日付データが存在しません。")
         return pd.DataFrame()
+
     df = df[df["源氏名"] == user_id].sort_values("日付", ascending=False)
     df = df.drop(columns=["源氏名"]).reset_index(drop=True)
     return df
@@ -141,7 +150,7 @@ def display_history(df):
     max_salary = df["税引後お給料"].max()
     st.markdown(f"👑 **過去最高お給料：¥{math.ceil(max_salary):,} 円**")
     
-    # --- 今月の合計お給料と配信回数 ---
+    # 今月の合計お給料と配信回数
     current_month = datetime.now().strftime("%Y-%m")
     this_month_df = df[df["日付"].dt.strftime("%Y-%m") == current_month]
     monthly_total = this_month_df["税引後お給料"].sum()
@@ -187,6 +196,7 @@ def display_calendar(df):
     saved_dates = df["日付"].dt.strftime("%Y-%m-%d").tolist() if not df.empty else []
     saved_set = set(saved_dates)
     days_of_week = ["月", "火", "水", "木", "金", "土", "日"]
+
     calendar_html = """
     <style>
         table.calendar {
@@ -214,18 +224,23 @@ def display_calendar(df):
     for day in days_of_week:
         calendar_html += f"<th>{day}</th>"
     calendar_html += "</tr>"
+
     week = [""] * start_weekday
     for d in range(1, last_day + 1):
         day_str = datetime(year, month, d).strftime("%Y-%m-%d")
         mark = "🌟" if day_str in saved_set else ""
         week.append(f"{d}{mark}")
         if len(week) == 7:
-            calendar_html += "<tr>" + "".join([f"<td>{cell}</td>" if cell != "" else "<td>&nbsp;</td>" for cell in week]) + "</tr>"
+            calendar_html += "<tr>" + "".join(
+                [f"<td>{cell}</td>" if cell != "" else "<td>&nbsp;</td>" for cell in week]
+            ) + "</tr>"
             week = []
     if week:
         while len(week) < 7:
             week.append("")
-        calendar_html += "<tr>" + "".join([f"<td>{cell}</td>" if cell != "" else "<td>&nbsp;</td>" for cell in week]) + "</tr>"
+        calendar_html += "<tr>" + "".join(
+            [f"<td>{cell}</td>" if cell != "" else "<td>&nbsp;</td>" for cell in week]
+        ) + "</tr>"
     calendar_html += "</table>"
     st.markdown(calendar_html, unsafe_allow_html=True)
 
@@ -235,39 +250,58 @@ def display_simulator(df, user_id):
     this_month_df = df[df["日付"].dt.strftime("%Y-%m") == current_month]
     current_total = this_month_df["税引後お給料"].sum()
     avg_salary = df["税引後お給料"].mean()
+
     future_sessions = st.number_input("例えば今月あと何回配信すると？", min_value=0, max_value=30, value=3, key="simulator_sessions")
     projected_total = current_total + avg_salary * future_sessions
-    last_day = datetime.now().replace(day=monthrange(datetime.now().year, datetime.now().month)[1]).strftime("%m月%d日")
-    st.markdown(f"📅 {last_day} 時点で、{user_id} さんの予測お給料は **¥{int(projected_total):,} 円** になりそうです！")
-    st.markdown(f"💡 今：¥{int(current_total):,} 円 ＋ 予測：¥{int(avg_salary * future_sessions):,} 円（平均 ¥{int(avg_salary):,}/回 × {future_sessions} 回）")
+    last_day = datetime.now().replace(
+        day=monthrange(datetime.now().year, datetime.now().month)[1]
+    ).strftime("%m月%d日")
+
+    st.markdown(
+        f"📅 {last_day} 時点で、{user_id} さんの予測お給料は **¥{int(projected_total):,} 円** になりそうです！"
+    )
+    st.markdown(
+        f"💡 今：¥{int(current_total):,} 円 ＋ 予測：¥{int(avg_salary * future_sessions):,} 円"
+        f"（平均 ¥{int(avg_salary):,}/回 × {future_sessions} 回）"
+    )
 
 def main():
     st.title("🔐 ライバー専用｜報酬計算ツール (Ver.10.7.3)")
     st.subheader("👤 ログイン")
+
     credentials_dict = load_credentials()
     goals = load_goals()
+
     user_id = st.text_input("ID（源氏名）を入力してください")
     user_pass = st.text_input("Password（パスワード）を入力してください", type="password")
+
+    # ログイン判定
     if user_id in credentials_dict and credentials_dict[user_id] == user_pass:
         st.success("✅ ログイン成功しました！")
+
         sheet = connect_to_sheet()
         if sheet is None:
             return
+
         rate = get_exchange_rate()
         if rate == 0:
             st.error("適切な為替レートが取得できなかったため、計算を終了します。")
             return
+
         usd_input = st.text_input("💵 今日のドル収益 ($)", placeholder="例：200")
         try:
             usd = float(usd_input)
         except Exception:
             usd = 0.0
+
         before_tax, tax, after_tax = calculate_rewards(usd, rate)
+
         st.write(f"📈 ドル円レート：{rate:.1f} 円")
         st.write(f"💰 税引前報酬：¥{before_tax:,} 円")
         st.write(f"🧾 源泉徴収額：-¥{tax:,} 円")
         st.success(f"🎉 税引後お給料：¥{after_tax:,} 円")
         st.info("💬 本日も大変お疲れ様でした。")
+
         st.markdown(
             """
             <div style='background-color:#4a148c; color:#FFFFFF; padding:12px; border-left: 6px solid #f48fb1; border-radius:5px;'>
@@ -280,9 +314,12 @@ def main():
             "<span style='color:#f8bbd0; font-weight:bold;'>⚠️ 必ず『保存する』ボタンを押してください！</span>",
             unsafe_allow_html=True
         )
+
         if st.button("💾 保存する（※忘れずに！）"):
             save_to_sheet(sheet, user_id, usd, rate, before_tax, tax, after_tax)
             st.session_state.saved = True
+
+        # 「保存する」ボタン押下後にのみ履歴やグラフを表示
         if st.session_state.saved:
             df = load_records(sheet, user_id)
             if df.empty:
@@ -293,9 +330,11 @@ def main():
                 display_monthly_bar_chart(df)
                 display_calendar(df)
                 display_simulator(df, user_id)
+
     else:
         if user_id and user_pass:
             st.error("❌ IDまたはパスワードが正しくありません。")
+
 
 if __name__ == "__main__":
     main()
